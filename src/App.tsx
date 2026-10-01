@@ -26,13 +26,14 @@ export default function App(){
  const [tab,setTab]=useState('home'),[sheet,setSheet]=useState<string|null>(null),[menu,setMenu]=useState(false),[toast,setToast]=useState('')
  const say=(m:string)=>{setToast(m);setTimeout(()=>setToast(''),2000)}
  const go=(s:string)=>{setMenu(false);setSheet(s)}
- const n=streak(db.tomas),hoy=db.tomas.includes(iso())
+ if(!db.perfil)return <Login save={save}/>
+ const n=streak(db.visitas),hoy=db.tomas.includes(iso())
  const nav=[['home','Inicio',Home],['cal','Calendario',CalendarDays],['x','',Plus],['tips','Consejos',Lightbulb],['me','Perfil',User]] as const
  return <div className="relative mx-auto flex h-[100dvh] max-w-[430px] flex-col overflow-hidden bg-gradient-to-b from-cream to-rose shadow-2xl">
   <main className="flex-1 overflow-y-auto overflow-x-hidden pt-[env(safe-area-inset-top)]">
    {tab==='home'&&<Inicio db={db} n={n} hoy={hoy} go={go} setTab={setTab}/>}
    {tab==='cal'&&<Cal db={db} save={save} n={n} go={go}/>}
-   {tab==='chat'&&<Chat/>}
+   {tab==='chat'&&<Chat db={db}/>}
    {tab==='tips'&&<Tips/>}
    {tab==='me'&&<Perfil db={db} save={save} reset={()=>{if(confirm('¿Cerrar sesión y borrar los datos locales?')){reset();say('Sesión cerrada')}}} say={say}/>}
   </main>
@@ -53,7 +54,7 @@ function Inicio({db,n,hoy,go,setTab}:any){
  const rec=db.rec.find((r:any)=>r.on)
  return <div className="space-y-3 p-4 pb-32">
   <div className="flex items-center gap-3"><div className="grid h-14 w-14 place-items-center rounded-2xl bg-gradient-to-br from-[#c28a66] to-cop text-xl font-semibold text-white">Mm</div><div className="flex-1"><h1 className="text-2xl font-medium">MiMétodo</h1><p className="text-[11px] opacity-70">Tu salud, tu ritmo, tu decisión.</p></div><button aria-label="Perfil" onClick={()=>setTab('me')} className="grid h-11 w-11 place-items-center rounded-full bg-white shadow-soft"><User size={20}/></button></div>
-  <C><p className="text-lg font-medium">¡Hola, Martina! ♡</p><p className="text-sm opacity-70">Hoy es un gran día para cuidar de ti 💕</p></C>
+  <C><p className="text-lg font-medium">¡Hola, {db.perfil.nombre}! ♡</p><p className="text-sm opacity-70">Hoy es un gran día para cuidar de ti 💕</p></C>
   <div className="up flex items-center gap-4 rounded-3xl bg-gradient-to-br from-[#c9936f] to-[#8f5c3f] p-4 text-white shadow-soft"><Flame size={44}/><div><p className="text-xs">Tu racha diaria</p><p className="text-3xl font-semibold">{n} <span className="text-sm font-normal">días seguidos usando MiMétodo</span></p></div></div>
   <Row icon={<Pill size={22}/>} title="Tu método actual" sub={db.metodo} onClick={()=>setTab('me')}/>
   <C className="flex items-center gap-3"><Ico><CalendarDays size={22}/></Ico><div className="flex-1"><p className="text-sm font-medium">Próxima toma</p><p className="text-xs opacity-70">{hoy?'Mañ':'Hoy'}{hoy?'ana':''} · {rec?.time||'--:--'} hrs</p></div><button aria-label="Registrar toma" onClick={()=>go('toma')} className="grid h-11 w-11 place-items-center rounded-full bg-sand text-cop"><Bell size={20}/></button></C>
@@ -80,13 +81,13 @@ function Cal({db,save,n,go}:any){
  </div>
 }
 
-function Chat(){
- const hi='¡Hola, Martina! ✨\n\nSoy tu asistente virtual de MiMétodo. Estoy aquí para responder tus dudas, entregarte información confiable y acompañarte en todo tu proceso.\n\n¿Qué te gustaría saber hoy?'
+function Chat({db}:any){
+ const hi=`¡Hola, ${db.perfil.nombre}! ✨\n\nSoy tu asistente virtual de MiMétodo. Estoy aquí para responder tus dudas, entregarte información confiable y acompañarte en todo tu proceso.\n\n¿Qué te gustaría saber hoy?`
  const [ms,setMs]=useState<{role:string;content:string}[]>([]),[txt,setTxt]=useState(''),[load,setLoad]=useState(false),[err,setErr]=useState(''),last=useRef(''),end=useRef<HTMLDivElement>(null)
  useEffect(()=>{end.current?.scrollIntoView({behavior:'smooth'})},[ms,load,err])
  const send=async(q:string,retry=false)=>{q=q.trim();if(!q||load)return;setErr('');setTxt('');last.current=q
   const hist=ms;if(!retry)setMs(h=>[...h,{role:'user',content:q}]);setLoad(true)
-  try{const r=await chatApi(q,hist);setMs(h=>[...h,{role:'assistant',content:r}])}catch(e:any){setErr(e.message==='error'||!e.message?'No pudimos conectar con el asistente. Inténtalo nuevamente.':e.message)}setLoad(false)}
+  try{const r=await chatApi(q,hist,{...db.perfil,metodo:db.metodo});setMs(h=>[...h,{role:'assistant',content:r}])}catch(e:any){setErr(e.message==='error'||!e.message?'No pudimos conectar con el asistente. Inténtalo nuevamente.':e.message)}setLoad(false)}
  const Q=['¿Es normal tener cambios de ánimo?','¿Cuándo debo tomar mi pastilla?','¿Qué hacer si olvido una dosis?','Información sobre otros métodos']
  const B=({r,c}:any)=><div className={`up max-w-[85%] whitespace-pre-wrap rounded-3xl p-4 text-sm shadow-soft ${r==='user'?'ml-auto bg-cop text-white':'bg-white'}`}>{c}</div>
  return <div className="flex h-full flex-col"><h1 className="flex items-center justify-center gap-2 py-3 text-base font-medium"><Sparkles size={18} className="text-cop"/>Asistente virtual</h1>
@@ -107,14 +108,15 @@ function Tips(){
 
 function Perfil({db,save,reset,say}:any){
  const [p,setP]=useState<string|null>(null)
- const L=[['metodo','Mi método',Pill],['rec','Mis recordatorios',Bell],['sint','Mis síntomas',HeartPulse],['camb','Mis cambios',Repeat],['pref','Mis preferencias',SlidersHorizontal],['priv','Privacidad',Shield],['notif','Notificaciones',Bell],['conf','Configuración',Settings]] as const
+ const L=[['datos','Mis datos',User],['metodo','Mi método',Pill],['rec','Mis recordatorios',Bell],['sint','Mis síntomas',HeartPulse],['camb','Mis cambios',Repeat],['pref','Mis preferencias',SlidersHorizontal],['priv','Privacidad',Shield],['notif','Notificaciones',Bell],['conf','Configuración',Settings]] as const
  const hist=(a:any[],f:(x:any)=>string)=>a.length?[...a].reverse().map((x,i)=><C key={i}><p className="text-sm">{f(x)}</p>{x.note&&<p className="text-xs opacity-70">{x.note}</p>}</C>):<p className="text-sm opacity-70">Aún no hay registros.</p>
  const info:any={pref:'Idioma: español. Tus datos se guardan solo en este dispositivo.',priv:'MiMétodo guarda tus registros únicamente en tu teléfono (localStorage). Los mensajes del chat se envían a tu servidor y al modelo de IA solo para generar la respuesta.',notif:'Los recordatorios se muestran dentro de la app. Las notificaciones push llegarán en una próxima versión.',conf:'MiMétodo v1.0 · Instálala desde el menú del navegador con "Agregar a pantalla de inicio".'}
  return <div className="space-y-3 p-4 pb-32"><h1 className="text-xl font-medium">Mi perfil</h1>
-  <div className="flex flex-col items-center py-2"><div className="grid h-20 w-20 place-items-center rounded-full bg-sand text-4xl">👩</div><p className="mt-2 text-lg font-medium">Martina</p></div>
+  <div className="flex flex-col items-center py-2"><div className="grid h-20 w-20 place-items-center rounded-full bg-sand text-4xl">👩</div><p className="mt-2 text-lg font-medium">{db.perfil.nombre}</p><p className="text-xs opacity-70">{db.perfil.edad} años</p></div>
   {L.map(([k,l,I])=><Row key={k} icon={<I size={20}/>} title={l} onClick={()=>setP(k)}/>)}
   <Row icon={<LogOut size={20}/>} title="Cerrar sesión" onClick={reset}/>
   {p&&<Sheet title={L.find(x=>x[0]===p)![1]} onClose={()=>setP(null)}>
+   {p==='datos'&&<><Lbl>Nombre</Lbl><Inp value={db.perfil.nombre} onChange={(e:any)=>save({perfil:{...db.perfil,nombre:e.target.value}})}/><Lbl>Edad</Lbl><Inp type="number" value={db.perfil.edad} onChange={(e:any)=>save({perfil:{...db.perfil,edad:e.target.value}})}/><p className="text-xs opacity-70">Se guardan al escribir. La IA usa estos datos para personalizar sus respuestas.</p></>}
    {p==='metodo'&&['Pastillas anticonceptivas','Parche','Anillo vaginal','DIU','Implante','Inyección','Preservativo','Otro'].map(x=><button key={x} onClick={()=>{save({metodo:x});say('Método actualizado')}} className={`flex w-full items-center justify-between rounded-2xl px-4 text-sm ${db.metodo===x?'bg-cop text-white':'bg-white'}`}>{x}{db.metodo===x&&<Check size={16}/>}</button>)}
    {p==='rec'&&(db.rec.length?db.rec.map((r:any)=><C key={r.id} className="flex items-center gap-3"><div className="flex-1"><p className="text-sm font-medium">{r.name}</p><p className="text-xs opacity-70">{r.time} · {r.freq}</p></div><Sw on={r.on} set={()=>save({rec:db.rec.map((x:any)=>x.id===r.id?{...x,on:!x.on}:x)})}/><button aria-label="Eliminar" onClick={()=>save({rec:db.rec.filter((x:any)=>x.id!==r.id)})}><X size={16}/></button></C>):<p className="text-sm opacity-70">Sin recordatorios.</p>)}
    {p==='sint'&&hist(db.sint,x=>`${x.date} · ${x.items.join(', ')}`)}
@@ -136,4 +138,16 @@ function Form({t,db,save,close,say}:{t:string;db:DB;save:(p:Partial<DB>)=>void;c
   {t==='rec'&&<><Lbl>Nombre</Lbl><Inp value={f.name} placeholder="Pastilla anticonceptiva" onChange={(e:any)=>s('name',e.target.value)}/><Lbl>Hora</Lbl><Inp type="time" value={f.time} onChange={(e:any)=>s('time',e.target.value)}/>{Date_}<Lbl>Frecuencia</Lbl><select value={f.freq} onChange={e=>s('freq',e.target.value)} className="w-full rounded-2xl border border-sand bg-white px-4 py-3 text-sm">{['Todos los días','Una vez','Cada semana','Cada mes'].map(x=><option key={x}>{x}</option>)}</select><div className="pt-3"><Btn onClick={()=>f.name.trim()?done({rec:[...db.rec,{id,name:f.name,time:f.time,date:f.date,freq:f.freq,on:true}]},'Recordatorio creado'):say('Escribe un nombre')}>Guardar recordatorio</Btn></div></>}
   {t==='fecha'&&<><Lbl>Tipo</Lbl><div className="flex flex-wrap gap-2">{['Control médico','Renovación del método','Consulta','Otra fecha'].map(x=><button key={x} onClick={()=>s('name',x)} className={`rounded-full px-4 text-xs ${f.name===x?'bg-cop text-white':'bg-white'}`}>{x}</button>)}</div><Inp value={f.name} placeholder="Nombre" onChange={(e:any)=>s('name',e.target.value)}/>{Date_}<Lbl>Hora (opcional)</Lbl><Inp type="time" value={f.time} onChange={(e:any)=>s('time',e.target.value)}/>{Note}<Btn onClick={()=>f.name.trim()?done({fech:[...db.fech,{id,name:f.name,date:f.date,time:f.time,note:f.note}]},'Fecha agregada'):say('Escribe un nombre')}>Guardar fecha</Btn></>}
  </Sheet>
+}
+
+function Login({save}:{save:(p:Partial<DB>)=>void}){
+ const [nombre,setN]=useState(''),[edad,setE]=useState(''),[metodo,setM]=useState('Pastillas anticonceptivas'),[err,setErr]=useState('')
+ const go=()=>{const a=Number(edad);if(!nombre.trim())return setErr('Escribe tu nombre');if(!(a>=10&&a<=100))return setErr('Escribe una edad válida');save({perfil:{nombre:nombre.trim(),edad:a},metodo,visitas:[iso()]})}
+ return <div className="mx-auto flex h-[100dvh] max-w-[430px] flex-col justify-center overflow-y-auto bg-gradient-to-b from-cream to-rose p-6 pt-[max(1.5rem,env(safe-area-inset-top))]">
+  <div className="up mb-6 text-center"><div className="mx-auto mb-3 grid h-20 w-20 place-items-center rounded-3xl bg-gradient-to-br from-[#c28a66] to-cop text-3xl font-semibold text-white shadow-soft">Mm</div><h1 className="text-2xl font-medium">Bienvenida a MiMétodo</h1><p className="text-sm opacity-70">Tu salud, tu ritmo, tu decisión.</p></div>
+  <C><Lbl>¿Cómo te llamas?</Lbl><Inp value={nombre} onChange={(e:any)=>setN(e.target.value)} placeholder="Tu nombre" autoComplete="given-name"/>
+   <Lbl>¿Qué edad tienes?</Lbl><Inp type="number" inputMode="numeric" value={edad} onChange={(e:any)=>setE(e.target.value)} placeholder="Tu edad"/>
+   <Lbl>Tu método actual</Lbl><select value={metodo} onChange={e=>setM(e.target.value)} className="w-full rounded-2xl border border-sand bg-white px-4 py-3 text-sm">{['Pastillas anticonceptivas','Parche','Anillo vaginal','DIU','Implante','Inyección','Preservativo','Ninguno / Otro'].map(x=><option key={x}>{x}</option>)}</select>
+   {err&&<p role="alert" className="mt-3 text-sm text-red-700">{err}</p>}<div className="mt-4"><Btn onClick={go}>Comenzar</Btn></div>
+   <p className="mt-3 text-center text-[11px] opacity-70">Tus datos se guardan solo en este dispositivo.</p></C></div>
 }

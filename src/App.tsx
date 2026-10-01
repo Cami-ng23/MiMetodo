@@ -54,7 +54,7 @@ function Inicio({db,n,hoy,go,setTab}:any){
  const Q=[['Síntomas',HeartPulse,()=>go('sint')],['Cambios',CalendarDays,()=>go('camb')],['IA',Sparkles,()=>setTab('chat')],['Educación',BookOpen,()=>setTab('tips')]] as const
  const rec=db.rec.find((r:any)=>r.on)
  return <div className="space-y-3 p-4 pb-32">
-  <div className="flex items-center gap-3"><img src="/logo-mark.png" alt="MiMétodo" className="h-14 w-14 rounded-2xl shadow-soft"/><div className="flex-1"><h1 className="text-2xl font-medium">MiMétodo</h1><p className="text-[11px] opacity-70">Tu salud, tu ritmo, tu decisión.</p></div><button aria-label="Perfil" onClick={()=>setTab('me')} className="grid h-11 w-11 place-items-center rounded-full bg-white shadow-soft"><Avatar i={db.perfil.avatar} size={44}/></button></div>
+  <div className="flex items-center gap-3"><img src="/logo-mark.png" alt="MiMétodo" className="h-14 w-14 object-contain"/><div className="flex-1"><h1 className="text-2xl font-medium">MiMétodo</h1><p className="text-[11px] opacity-70">Tu salud, tu ritmo, tu decisión.</p></div><button aria-label="Perfil" onClick={()=>setTab('me')} className="grid h-11 w-11 place-items-center rounded-full bg-white shadow-soft"><Avatar i={db.perfil.avatar} size={44}/></button></div>
   <C><p className="text-lg font-medium">¡Hola, {db.perfil.nombre}! ♡</p><p className="text-sm opacity-70">Hoy es un gran día para cuidar de ti 💕</p></C>
   <div className="up flex items-center gap-4 rounded-3xl bg-gradient-to-br from-[#c9936f] to-[#8f5c3f] p-4 text-white shadow-soft"><Flame size={44}/><div><p className="text-xs">Tu racha diaria</p><p className="text-3xl font-semibold">{n} <span className="text-sm font-normal">días seguidos usando MiMétodo</span></p></div></div>
   <Row icon={<Pill size={22}/>} title="Tu método actual" sub={db.metodo} onClick={()=>setTab('me')}/>
@@ -146,7 +146,7 @@ function Login({save}:{save:(p:Partial<DB>)=>void}){
  const [av,setAv]=useState(0),[nombre,setN]=useState(''),[edad,setE]=useState(''),[metodo,setM]=useState('Pastillas anticonceptivas'),[err,setErr]=useState('')
  const go=()=>{const a=Number(edad);if(!nombre.trim())return setErr('Escribe tu nombre');if(!(a>=10&&a<=100))return setErr('Escribe una edad válida');save({perfil:{nombre:nombre.trim(),edad:a,avatar:av},metodo,visitas:[iso()]})}
  return <div className="mx-auto flex h-[100dvh] max-w-[430px] flex-col justify-center overflow-y-auto bg-gradient-to-b from-cream to-rose p-6 pt-[max(1.5rem,env(safe-area-inset-top))]">
-  <div className="up mb-6 text-center"><img src="/logo-full.png" alt="MiMétodo, tu salud, tu ritmo, tu decisión" className="mx-auto mb-2 w-64 rounded-3xl"/><h1 className="text-xl font-medium">Bienvenida</h1></div>
+  <div className="up mb-6 text-center"><img src="/logo-full.png" alt="MiMétodo, tu salud, tu ritmo, tu decisión" className="mx-auto w-64"/><p className="mt-1 text-lg">Bienvenida</p></div>
   <C><Lbl>Elige tu avatar</Lbl><Picker v={av} set={setAv}/><Lbl>¿Cómo te llamas?</Lbl><Inp value={nombre} onChange={(e:any)=>setN(e.target.value)} placeholder="Tu nombre" autoComplete="given-name"/>
    <Lbl>¿Qué edad tienes?</Lbl><Inp type="number" inputMode="numeric" value={edad} onChange={(e:any)=>setE(e.target.value)} placeholder="Tu edad"/>
    <Lbl>Tu método actual</Lbl><select value={metodo} onChange={e=>setM(e.target.value)} className="w-full rounded-2xl border border-sand bg-white px-4 py-3 text-sm">{['Pastillas anticonceptivas','Parche','Anillo vaginal','DIU','Implante','Inyección','Preservativo','Ninguno / Otro'].map(x=><option key={x}>{x}</option>)}</select>

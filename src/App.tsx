@@ -44,7 +44,8 @@ export default function App(){
   </nav>
   {menu&&<div className="absolute inset-0 z-20 bg-black/20" onClick={()=>setMenu(false)}><div className="pop absolute bottom-28 left-1/2 w-[85%] -translate-x-1/2 space-y-1 rounded-3xl bg-white p-3 shadow-xl" onClick={e=>e.stopPropagation()}>
    {[['sint','Registrar síntoma',HeartPulse],['camb','Registrar cambio',Repeat],['rec','Crear recordatorio',Bell],['toma','Registrar toma',Pill],['fecha','Agregar fecha importante',CalendarDays]].map(([k,l,I]:any)=><button key={k} onClick={()=>go(k)} className="flex w-full items-center gap-3 rounded-2xl px-3 text-left text-sm active:bg-sand"><I size={20} className="text-cop"/>{l}</button>)}</div></div>}
-  {sheet&&<Form t={sheet} db={db} save={save} close={()=>setSheet(null)} say={say}/>}
+  {sheet==='resumen'&&<Resumen db={db} close={()=>setSheet(null)}/>}
+  {sheet&&sheet!=='resumen'&&<Form t={sheet} db={db} save={save} close={()=>setSheet(null)} say={say}/>}
   {toast&&<div role="status" className="pop absolute left-1/2 top-6 z-50 flex -translate-x-1/2 items-center gap-2 rounded-full bg-cafe px-5 py-3 text-sm text-white shadow-lg"><Check size={16}/>{toast}</div>}
  </div>
 }
@@ -53,12 +54,13 @@ function Inicio({db,n,hoy,go,setTab}:any){
  const Q=[['Síntomas',HeartPulse,()=>go('sint')],['Cambios',CalendarDays,()=>go('camb')],['IA',Sparkles,()=>setTab('chat')],['Educación',BookOpen,()=>setTab('tips')]] as const
  const rec=db.rec.find((r:any)=>r.on)
  return <div className="space-y-3 p-4 pb-32">
-  <div className="flex items-center gap-3"><div className="grid h-14 w-14 place-items-center rounded-2xl bg-gradient-to-br from-[#c28a66] to-cop text-xl font-semibold text-white">Mm</div><div className="flex-1"><h1 className="text-2xl font-medium">MiMétodo</h1><p className="text-[11px] opacity-70">Tu salud, tu ritmo, tu decisión.</p></div><button aria-label="Perfil" onClick={()=>setTab('me')} className="grid h-11 w-11 place-items-center rounded-full bg-white shadow-soft"><User size={20}/></button></div>
+  <div className="flex items-center gap-3"><img src="/logo-mark.png" alt="MiMétodo" className="h-14 w-14 rounded-2xl shadow-soft"/><div className="flex-1"><h1 className="text-2xl font-medium">MiMétodo</h1><p className="text-[11px] opacity-70">Tu salud, tu ritmo, tu decisión.</p></div><button aria-label="Perfil" onClick={()=>setTab('me')} className="grid h-11 w-11 place-items-center rounded-full bg-white shadow-soft"><Avatar i={db.perfil.avatar} size={44}/></button></div>
   <C><p className="text-lg font-medium">¡Hola, {db.perfil.nombre}! ♡</p><p className="text-sm opacity-70">Hoy es un gran día para cuidar de ti 💕</p></C>
   <div className="up flex items-center gap-4 rounded-3xl bg-gradient-to-br from-[#c9936f] to-[#8f5c3f] p-4 text-white shadow-soft"><Flame size={44}/><div><p className="text-xs">Tu racha diaria</p><p className="text-3xl font-semibold">{n} <span className="text-sm font-normal">días seguidos usando MiMétodo</span></p></div></div>
   <Row icon={<Pill size={22}/>} title="Tu método actual" sub={db.metodo} onClick={()=>setTab('me')}/>
   <C className="flex items-center gap-3"><Ico><CalendarDays size={22}/></Ico><div className="flex-1"><p className="text-sm font-medium">Próxima toma</p><p className="text-xs opacity-70">{hoy?'Mañ':'Hoy'}{hoy?'ana':''} · {rec?.time||'--:--'} hrs</p></div><button aria-label="Registrar toma" onClick={()=>go('toma')} className="grid h-11 w-11 place-items-center rounded-full bg-sand text-cop"><Bell size={20}/></button></C>
   <div className="grid grid-cols-4 gap-2">{Q.map(([l,I,f])=><button key={l} onClick={f} className="up flex flex-col items-center gap-1 rounded-2xl bg-white/80 py-3 text-[11px] shadow-soft active:scale-95 transition"><I size={26} className="text-cop"/>{l}</button>)}</div>
+  <Row icon={<ClipboardList size={22}/>} title="Resumen semanal" sub="Mira cómo te fue esta semana" onClick={()=>go('resumen')}/>
   <p className="pt-4 text-center font-serif text-lg italic text-cop">Tu bienestar también es prioridad ♡</p>
  </div>
 }
@@ -91,7 +93,7 @@ function Chat({db}:any){
  const Q=['¿Es normal tener cambios de ánimo?','¿Cuándo debo tomar mi pastilla?','¿Qué hacer si olvido una dosis?','Información sobre otros métodos']
  const B=({r,c}:any)=><div className={`up max-w-[85%] whitespace-pre-wrap rounded-3xl p-4 text-sm shadow-soft ${r==='user'?'ml-auto bg-cop text-white':'bg-white'}`}>{c}</div>
  return <div className="flex h-full flex-col"><h1 className="flex items-center justify-center gap-2 py-3 text-base font-medium"><Sparkles size={18} className="text-cop"/>Asistente virtual</h1>
-  <div className="flex-1 space-y-3 overflow-y-auto px-4"><div className="flex items-start gap-2"><div className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-sand text-2xl">👩</div><B r="a" c={hi}/></div>
+  <div className="flex-1 space-y-3 overflow-y-auto px-4"><div className="flex items-start gap-2"><Avatar ai size={48}/><B r="a" c={hi}/></div>
    {!ms.length&&Q.map(q=><button key={q} onClick={()=>send(q)} className="up flex w-full items-center justify-between rounded-full bg-white/80 px-4 text-left text-sm shadow-soft">{q}<ChevronRight size={16}/></button>)}
    {ms.map((m,i)=><B key={i} r={m.role} c={m.content}/>)}
    {load&&<p className="text-xs italic opacity-70">MiMétodo está escribiendo...</p>}
@@ -112,11 +114,11 @@ function Perfil({db,save,reset,say}:any){
  const hist=(a:any[],f:(x:any)=>string)=>a.length?[...a].reverse().map((x,i)=><C key={i}><p className="text-sm">{f(x)}</p>{x.note&&<p className="text-xs opacity-70">{x.note}</p>}</C>):<p className="text-sm opacity-70">Aún no hay registros.</p>
  const info:any={pref:'Idioma: español. Tus datos se guardan solo en este dispositivo.',priv:'MiMétodo guarda tus registros únicamente en tu teléfono (localStorage). Los mensajes del chat se envían a tu servidor y al modelo de IA solo para generar la respuesta.',notif:'Los recordatorios se muestran dentro de la app. Las notificaciones push llegarán en una próxima versión.',conf:'MiMétodo v1.0 · Instálala desde el menú del navegador con "Agregar a pantalla de inicio".'}
  return <div className="space-y-3 p-4 pb-32"><h1 className="text-xl font-medium">Mi perfil</h1>
-  <div className="flex flex-col items-center py-2"><div className="grid h-20 w-20 place-items-center rounded-full bg-sand text-4xl">👩</div><p className="mt-2 text-lg font-medium">{db.perfil.nombre}</p><p className="text-xs opacity-70">{db.perfil.edad} años</p></div>
+  <div className="flex flex-col items-center py-2"><Avatar i={db.perfil.avatar} size={80}/><p className="mt-2 text-lg font-medium">{db.perfil.nombre}</p><p className="text-xs opacity-70">{db.perfil.edad} años</p></div>
   {L.map(([k,l,I])=><Row key={k} icon={<I size={20}/>} title={l} onClick={()=>setP(k)}/>)}
   <Row icon={<LogOut size={20}/>} title="Cerrar sesión" onClick={reset}/>
   {p&&<Sheet title={L.find(x=>x[0]===p)![1]} onClose={()=>setP(null)}>
-   {p==='datos'&&<><Lbl>Nombre</Lbl><Inp value={db.perfil.nombre} onChange={(e:any)=>save({perfil:{...db.perfil,nombre:e.target.value}})}/><Lbl>Edad</Lbl><Inp type="number" value={db.perfil.edad} onChange={(e:any)=>save({perfil:{...db.perfil,edad:e.target.value}})}/><p className="text-xs opacity-70">Se guardan al escribir. La IA usa estos datos para personalizar sus respuestas.</p></>}
+   {p==='datos'&&<><Lbl>Avatar</Lbl><Picker v={db.perfil.avatar||0} set={(i:number)=>save({perfil:{...db.perfil,avatar:i}})}/><Lbl>Nombre</Lbl><Inp value={db.perfil.nombre} onChange={(e:any)=>save({perfil:{...db.perfil,nombre:e.target.value}})}/><Lbl>Edad</Lbl><Inp type="number" value={db.perfil.edad} onChange={(e:any)=>save({perfil:{...db.perfil,edad:e.target.value}})}/><p className="text-xs opacity-70">Se guardan al escribir. La IA usa estos datos para personalizar sus respuestas.</p></>}
    {p==='metodo'&&['Pastillas anticonceptivas','Parche','Anillo vaginal','DIU','Implante','Inyección','Preservativo','Otro'].map(x=><button key={x} onClick={()=>{save({metodo:x});say('Método actualizado')}} className={`flex w-full items-center justify-between rounded-2xl px-4 text-sm ${db.metodo===x?'bg-cop text-white':'bg-white'}`}>{x}{db.metodo===x&&<Check size={16}/>}</button>)}
    {p==='rec'&&(db.rec.length?db.rec.map((r:any)=><C key={r.id} className="flex items-center gap-3"><div className="flex-1"><p className="text-sm font-medium">{r.name}</p><p className="text-xs opacity-70">{r.time} · {r.freq}</p></div><Sw on={r.on} set={()=>save({rec:db.rec.map((x:any)=>x.id===r.id?{...x,on:!x.on}:x)})}/><button aria-label="Eliminar" onClick={()=>save({rec:db.rec.filter((x:any)=>x.id!==r.id)})}><X size={16}/></button></C>):<p className="text-sm opacity-70">Sin recordatorios.</p>)}
    {p==='sint'&&hist(db.sint,x=>`${x.date} · ${x.items.join(', ')}`)}
@@ -141,13 +143,41 @@ function Form({t,db,save,close,say}:{t:string;db:DB;save:(p:Partial<DB>)=>void;c
 }
 
 function Login({save}:{save:(p:Partial<DB>)=>void}){
- const [nombre,setN]=useState(''),[edad,setE]=useState(''),[metodo,setM]=useState('Pastillas anticonceptivas'),[err,setErr]=useState('')
- const go=()=>{const a=Number(edad);if(!nombre.trim())return setErr('Escribe tu nombre');if(!(a>=10&&a<=100))return setErr('Escribe una edad válida');save({perfil:{nombre:nombre.trim(),edad:a},metodo,visitas:[iso()]})}
+ const [av,setAv]=useState(0),[nombre,setN]=useState(''),[edad,setE]=useState(''),[metodo,setM]=useState('Pastillas anticonceptivas'),[err,setErr]=useState('')
+ const go=()=>{const a=Number(edad);if(!nombre.trim())return setErr('Escribe tu nombre');if(!(a>=10&&a<=100))return setErr('Escribe una edad válida');save({perfil:{nombre:nombre.trim(),edad:a,avatar:av},metodo,visitas:[iso()]})}
  return <div className="mx-auto flex h-[100dvh] max-w-[430px] flex-col justify-center overflow-y-auto bg-gradient-to-b from-cream to-rose p-6 pt-[max(1.5rem,env(safe-area-inset-top))]">
-  <div className="up mb-6 text-center"><div className="mx-auto mb-3 grid h-20 w-20 place-items-center rounded-3xl bg-gradient-to-br from-[#c28a66] to-cop text-3xl font-semibold text-white shadow-soft">Mm</div><h1 className="text-2xl font-medium">Bienvenida a MiMétodo</h1><p className="text-sm opacity-70">Tu salud, tu ritmo, tu decisión.</p></div>
-  <C><Lbl>¿Cómo te llamas?</Lbl><Inp value={nombre} onChange={(e:any)=>setN(e.target.value)} placeholder="Tu nombre" autoComplete="given-name"/>
+  <div className="up mb-6 text-center"><img src="/logo-full.png" alt="MiMétodo, tu salud, tu ritmo, tu decisión" className="mx-auto mb-2 w-64 rounded-3xl"/><h1 className="text-xl font-medium">Bienvenida</h1></div>
+  <C><Lbl>Elige tu avatar</Lbl><Picker v={av} set={setAv}/><Lbl>¿Cómo te llamas?</Lbl><Inp value={nombre} onChange={(e:any)=>setN(e.target.value)} placeholder="Tu nombre" autoComplete="given-name"/>
    <Lbl>¿Qué edad tienes?</Lbl><Inp type="number" inputMode="numeric" value={edad} onChange={(e:any)=>setE(e.target.value)} placeholder="Tu edad"/>
    <Lbl>Tu método actual</Lbl><select value={metodo} onChange={e=>setM(e.target.value)} className="w-full rounded-2xl border border-sand bg-white px-4 py-3 text-sm">{['Pastillas anticonceptivas','Parche','Anillo vaginal','DIU','Implante','Inyección','Preservativo','Ninguno / Otro'].map(x=><option key={x}>{x}</option>)}</select>
    {err&&<p role="alert" className="mt-3 text-sm text-red-700">{err}</p>}<div className="mt-4"><Btn onClick={go}>Comenzar</Btn></div>
    <p className="mt-3 text-center text-[11px] opacity-70">Tus datos se guardan solo en este dispositivo.</p></C></div>
+}
+
+const AV=[{s:'#f3d2b8',h:'#4a2c20',t:'#e7b7a8'},{s:'#e0b08c',h:'#2b1b16',t:'#c9a27e'},{s:'#8d5a3b',h:'#1c1210',t:'#d8a7b1'},{s:'#f6dcc6',h:'#b5703a',t:'#b9c7b0'}]
+function Avatar({i=0,size=48,ai=false}:{i?:number;size?:number;ai?:boolean}){
+ const a=ai?{s:'#f3d2b8',h:'#5a3325',t:'#ffffff'}:AV[i??0]||AV[0]
+ return <svg viewBox="0 0 100 100" width={size} height={size} className="shrink-0 rounded-full" role="img" aria-label={ai?'Asistente':'Tu avatar'}><rect width="100" height="100" fill="#f6e4de"/>
+  <path d="M26 48Q26 20 50 20Q74 20 74 48L77 82Q50 90 23 82Z" fill={a.h}/><path d="M20 100Q20 72 50 70Q80 72 80 100Z" fill={a.t}/>{ai&&<path d="M42 71L50 88L58 71Z" fill="#e7b7a8"/>}
+  <rect x="44" y="58" width="12" height="16" rx="5" fill={a.s}/><ellipse cx="50" cy="48" rx="19" ry="22" fill={a.s}/><path d="M30 47Q31 25 50 25Q69 25 70 47Q58 33 50 33Q42 33 30 47Z" fill={a.h}/>
+  <circle cx="43" cy="50" r="2" fill="#3b2a24"/><circle cx="57" cy="50" r="2" fill="#3b2a24"/><circle cx="38" cy="57" r="3" fill="#f2a9a0" opacity=".5"/><circle cx="62" cy="57" r="3" fill="#f2a9a0" opacity=".5"/><path d="M44 58Q50 64 56 58" stroke="#b5655a" strokeWidth="2" fill="none" strokeLinecap="round"/></svg>
+}
+const Picker=({v,set}:{v:number;set:(i:number)=>void})=><div className="flex justify-between">{AV.map((_,i)=><button key={i} aria-label={'Avatar '+(i+1)} aria-pressed={v===i} onClick={()=>set(i)} className={`rounded-full p-0.5 ${v===i?'ring-2 ring-cop':'opacity-70'}`} style={{minHeight:0}}><Avatar i={i} size={52}/></button>)}</div>
+
+function Resumen({db,close}:{db:DB;close:()=>void}){
+ const days=Array.from({length:7},(_,i)=>{const d=new Date();d.setDate(d.getDate()-6+i);return iso(d)})
+ const uso=days.filter(d=>db.visitas.includes(d)),tom=days.filter(d=>db.tomas.includes(d)),sint=db.sint.filter((x:any)=>days.includes(x.date)),camb=db.camb.filter((x:any)=>days.includes(x.date))
+ const cnt:Record<string,number>={};sint.forEach((x:any)=>x.items.forEach((k:string)=>cnt[k]=(cnt[k]||0)+1))
+ const top=Object.entries(cnt).sort((a,b)=>b[1]-a[1]).slice(0,3).map(([k,v])=>`${k} (${v})`).join(', ')
+ const [txt,setTxt]=useState(''),[load,setLoad]=useState(false),[err,setErr]=useState(false)
+ const ask=async()=>{setLoad(true);setErr(false);try{setTxt(await chatApi(`Hazme un resumen amable y breve de mi semana con estos datos: entré a la app ${uso.length} de 7 días; registré ${tom.length} tomas; síntomas: ${top||'ninguno'}; cambios registrados: ${camb.length}. Dame ánimo y 1 o 2 consejos generales. No des diagnósticos.`,[],{...db.perfil,metodo:db.metodo}))}catch{setErr(true)}setLoad(false)}
+ const St=({n,l}:{n:string|number;l:string})=><div className="flex-1 rounded-2xl bg-white/80 p-3 text-center shadow-soft"><p className="text-2xl font-semibold text-cop">{n}</p><p className="text-[11px] opacity-70">{l}</p></div>
+ return <Sheet title="Resumen semanal" onClose={close}>
+  <C><p className="mb-3 text-xs opacity-70">Últimos 7 días · {db.perfil.nombre}</p><div className="grid grid-cols-7 gap-1 text-center">{days.map(d=><div key={d} className="flex flex-col items-center gap-1"><span className="text-[10px] opacity-70">{new Date(d+'T12:00').toLocaleDateString('es',{weekday:'short'}).slice(0,3)}</span><span className={`grid h-9 w-9 place-items-center rounded-full ${db.visitas.includes(d)?'bg-cop text-white':'bg-sand'}`}>{db.visitas.includes(d)&&<Check size={16}/>}</span><Pill size={14} className={db.tomas.includes(d)?'text-cop':'text-sand'} aria-label={db.tomas.includes(d)?'Toma registrada':'Sin toma'}/></div>)}</div><p className="mt-3 text-[11px] opacity-70">● Entraste a la app · 💊 Toma registrada</p></C>
+  <div className="flex gap-2"><St n={`${uso.length}/7`} l="Días en la app"/><St n={`${tom.length}/7`} l="Tomas"/></div>
+  <div className="flex gap-2"><St n={sint.length} l="Síntomas"/><St n={camb.length} l="Cambios"/></div>
+  <C><p className="text-sm font-medium">Síntomas más frecuentes</p><p className="text-sm opacity-80">{top||'Sin síntomas registrados esta semana.'}</p></C>
+  <Btn onClick={ask}>{load?'MiMétodo está escribiendo...':'✨ Comentario de MiMétodo'}</Btn>
+  {txt&&<C><p className="whitespace-pre-wrap text-sm">{txt}</p></C>}{err&&<C><p className="text-sm">No pudimos conectar con el asistente. Inténtalo nuevamente.</p></C>}
+ </Sheet>
 }

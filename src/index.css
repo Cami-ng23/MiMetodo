@@ -1,0 +1,5 @@
+@tailwind base;@tailwind components;@tailwind utilities;
+html,body,#root{height:100%;margin:0;overflow-x:hidden}body{background:#efe0d4;font-family:Poppins,system-ui,sans-serif;color:#6b4a38;-webkit-tap-highlight-color:transparent}
+button{min-height:44px;cursor:pointer}
+@keyframes up{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}.up{animation:up .35s ease both}
+@keyframes pop{from{opacity:0;transform:scale(.9) translateY(10px)}to{opacity:1;transform:none}}.pop{animation:pop .2s ease both}
